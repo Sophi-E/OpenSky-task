@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import Modal from "@material-ui/core/Modal";
 import Backdrop from "@material-ui/core/Backdrop";
@@ -7,6 +6,7 @@ import Fade from "@material-ui/core/Fade";
 import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
 import Combo from "./Combo";
+import { FlightDetail, TabPanel } from "./FlightDetails";
 
 const useStyles = makeStyles((theme) => ({
   modal: {
@@ -21,17 +21,31 @@ const useStyles = makeStyles((theme) => ({
     width: "50%",
     padding: theme.spacing(2, 4, 3),
   },
+  flightsContainer: {
+    margin: "2em 0",
+    height: "20vh",
+    background: "ivory",
+    borderRadius: 5,
+    overflowY: "scroll",
+  },
 }));
 
-const DataModal = ({ showModal, handleClose, itemId, children }) => {
+const DataModal = ({ showModal, handleClose, itemId }) => {
+  const icao24 = itemId;
   const classes = useStyles();
   const [tab, setTab] = useState(0);
 
-  const [data, setData] = useState([]);
-  const [dataFetched, setDataFetched] = useState(false);
-  const [arrivalUrl, setArrivalUrl] = useState("");
-  const [departureUrl, setDepartureUrl] = useState("");
-  const [whichTab, setWhichTab] = useState("arrivals");
+  const [data, setData] = useState({ arrivals: [], departures: [] });
+  const [arrivalUrl, setArrivalUrl] = useState(
+    `https://opensky-network.org/api/flights/arrival?airport=${itemId}&begin=${
+      Number(Date.now().valueOf().toString().substring(0, 10)) - 36000
+    }&end=${Date.now().valueOf().toString().substring(0, 10)}`
+  );
+  const [departureUrl, setDepartureUrl] = useState(
+    `https://opensky-network.org/api/flights/departure?airport=${itemId}&begin=${
+      Number(Date.now().valueOf().toString().substring(0, 10)) - 36000
+    }&end=${Date.now().valueOf().toString().substring(0, 10)}`
+  );
 
   const setupUrls = (begin = Date.now(), end = Date.now()) => {
     const configureArrivalUrl = (airport, begin, end) =>
@@ -39,26 +53,35 @@ const DataModal = ({ showModal, handleClose, itemId, children }) => {
     const configureDepartureUrl = (airport, begin, end) =>
       `https://opensky-network.org/api/flights/departure?airport=${airport}&begin=${begin}&end=${end}`;
 
-    begin = begin.valueOf().toString().substring(0, 10);
-    end = end.valueOf().toString().substring(0, 10);
-
-    setArrivalUrl(configureArrivalUrl(itemId, begin, end));
-    setDepartureUrl(configureDepartureUrl(itemId, begin, end));
+    setArrivalUrl(configureArrivalUrl(icao24, begin, end));
+    setDepartureUrl(configureDepartureUrl(icao24, begin, end));
   };
 
   const onChangeHandler = async (timeOption) => {
-    const begin = new Date();
-    begin.setHours(timeOption.value);
-    const end = Date.now();
-    await setupUrls(begin, end);
+    if (timeOption) {
+      const begin = Math.round(new Date() / 1000) + timeOption.value * 3600;
+      const end = Math.round(Date.now() / 1000);
+      setupUrls(begin, end);
+
+      let arrivals = await fetch(arrivalUrl);
+      arrivals = await arrivals.json();
+
+      let departures = await fetch(departureUrl);
+      departures = await departures.json();
+
+      setData({ arrivals, departures });
+    } else {
+      setData({ arrivals: [], departures: [] });
+    }
   };
 
-  const onChangeTab = (which) => {
-    setWhichTab(which);
-    loadFlights();
+  const changeTab = (event, newValue) => {
+    setTab(newValue);
   };
 
-  const loadFlights = async () => {};
+  const checkAirport = () => {
+    if (!arrivalUrl.includes(itemId)) setData({ arrivals: [], departures: [] });
+  };
 
   return (
     <Modal
@@ -66,6 +89,7 @@ const DataModal = ({ showModal, handleClose, itemId, children }) => {
       aria-describedby="transition-modal-description"
       className={classes.modal}
       open={showModal}
+      onRendered={checkAirport}
       onClose={handleClose}
       closeAfterTransition
       BackdropComponent={Backdrop}
@@ -78,6 +102,7 @@ const DataModal = ({ showModal, handleClose, itemId, children }) => {
           <h2 id="transition-modal-title">Flight Details</h2>
           <Tabs
             value={tab}
+            onChange={changeTab}
             indicatorColor="primary"
             textColor="primary"
             variant="fullWidth"
@@ -88,8 +113,28 @@ const DataModal = ({ showModal, handleClose, itemId, children }) => {
           </Tabs>
 
           <Combo label="For the last:" onChangeHandler={onChangeHandler} />
-
-          <p>{data.length > 0 ? data : "No results found"}</p>
+          <TabPanel className={classes.flightsContainer} value={tab} index={0}>
+            {data.departures?.length > 0
+              ? data.departures.map((record) => (
+                  <FlightDetail
+                    className={classes.flightDetail}
+                    key={JSON.stringify(record)}
+                    {...record}
+                  />
+                ))
+              : "No departures found"}
+          </TabPanel>
+          <TabPanel className={classes.flightsContainer} value={tab} index={1}>
+            {data.arrivals?.length > 0
+              ? data.arrivals.map((record) => (
+                  <FlightDetail
+                    className={classes.flightDetail}
+                    key={JSON.stringify()}
+                    {...record}
+                  />
+                ))
+              : "No arrivals found"}
+          </TabPanel>
         </div>
       </Fade>
     </Modal>
