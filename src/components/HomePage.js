@@ -1,12 +1,12 @@
 import React from "react";
 
 import GridComponent from "./GridComponent";
-import Header from "./Header";
 
 const HomePage = () => {
   return (
     <>
-      <Header />
+      <h3>Welcome to your open sky dashboard</h3>
+
       <br />
       <GridComponent />
     </>
