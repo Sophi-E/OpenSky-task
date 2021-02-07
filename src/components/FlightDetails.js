@@ -48,6 +48,9 @@ export const FlightDetail = ({
       <span>Arrival airport: {estArrivalAirport}</span>
       <br />
       <span>Departure airport: {estDepartureAirport}</span>
+      <br />
+      <br />
+      <br />
     </div>
   );
 };

@@ -6,11 +6,12 @@ import clsx from "clsx";
 import IconButton from "@material-ui/core/IconButton";
 import Button from "@material-ui/core/Button";
 import Alert from "@material-ui/lab/Alert";
-import OutlinedInput from "@material-ui/core/OutlinedInput";
+import Input from "@material-ui/core/Input";
 import InputLabel from "@material-ui/core/InputLabel";
 import InputAdornment from "@material-ui/core/InputAdornment";
 import Visibility from "@material-ui/icons/Visibility";
 import VisibilityOff from "@material-ui/icons/VisibilityOff";
+import { Container } from "@material-ui/core";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -57,8 +58,8 @@ const Login = () => {
   }
 
   return (
-    <>
-      <div className={classes.root}>
+    <Container maxWidth="sm">
+      <div style={divStyle}>
         <h2>Sign In To Your Account</h2>
 
         {error && (
@@ -71,6 +72,7 @@ const Login = () => {
             Invalid Credentials! Use 'demo' as username and password
           </Alert>
         )}
+        <br />
         <form onSubmit={handleSubmit} noValidate autoComplete="off">
           <FormControl
             fullWidth
@@ -79,7 +81,7 @@ const Login = () => {
             <InputLabel htmlFor="outlined-adornment-username">
               Username
             </InputLabel>
-            <OutlinedInput
+            <Input
               id="outlined-adornment-username"
               value={values.username}
               onChange={handleChange("username")}
@@ -94,7 +96,7 @@ const Login = () => {
             <InputLabel htmlFor="outlined-adornment-password">
               Password
             </InputLabel>
-            <OutlinedInput
+            <Input
               id="outlined-adornment-password"
               type={values.showPassword ? "text" : "password"}
               value={values.password}
@@ -124,8 +126,13 @@ const Login = () => {
           </Button>
         </form>
       </div>
-    </>
+    </Container>
   );
 };
 
 export default Login;
+
+const divStyle = {
+  marginTop: "15rem",
+  boxSizing: "borderBox",
+};
